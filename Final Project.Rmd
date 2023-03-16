@@ -1,6 +1,6 @@
 ---
 title: "Final Project"
-author: "Caitlon, Connor"
+author: "Caitlon, Connor, Abraham"
 date: "2023-03-16"
 output: pdf_document
 ---
