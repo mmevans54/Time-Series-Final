@@ -1,0 +1,19 @@
+---
+title: "Final Project"
+author: "ENTER NAMES"
+date: "2023-03-16"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Data
+
+```{r}
+climate_data <- read.csv("DailyDelhiClimateTest.csv")
+head(climate_data)
+```
