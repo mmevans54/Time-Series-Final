@@ -1,6 +1,6 @@
 ---
 title: "Final Project"
-author: "ENTER NAMES"
+author: "Caitlon"
 date: "2023-03-16"
 output: pdf_document
 ---
