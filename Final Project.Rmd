@@ -16,4 +16,6 @@ Data
 ```{r}
 climate_data <- read.csv("DailyDelhiClimateTest.csv")
 head(climate_data)
+
+plot(ts(climate_data$meantemp))
 ```
