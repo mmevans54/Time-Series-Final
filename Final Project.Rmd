@@ -11,11 +11,167 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
+### Exploration
+
 Data
 
 ```{r}
-climate_data <- read.csv("DailyDelhiClimateTest.csv")
-head(climate_data)
+climate_data <- read.csv("DailyDelhiClimateTrain.csv")
+climate_data <- ts(climate_data$meantemp)
+plot(climate_data)
+```
 
-plot(ts(climate_data$meantemp))
+### Fit Linear Trend to the Climate Data
+
+```{r}
+climate.time <- time(climate_data)
+climate.fit.trend <- lm(climate_data ~ climate.time)
+climate.pass.trend <- ts(climate.fit.trend$fitted.values, deltat = 1/12)
+head(climate.pass.trend)
+```
+
+### Removing Trend & Seasonality
+
+```{r}
+#Removing Linear Trend
+climate.res <- climate.fit.trend$residuals
+
+#Formatting into time series
+climate.res <- ts(climate.res, deltat = 1/365)
+
+#Remove Seasonality
+climate.day <- factor(cycle(climate.res))
+fit.season <- lm(climate.res ~ climate.day)
+climate.season <- ts(fit.season$fitted, deltat = 1/365)
+
+climate.rand <- ts(climate.res - climate.season, deltat = 1/365)
+```
+
+### Plotting Trend, Seasonality, and Residuals
+
+```{r}
+par(mfrow = c(3,2))
+#Original Time Series Plot
+plot(climate_data, xlab = "Day", ylab = "Mean Temp", main = "Original Time Series")
+
+#Plotting Trend
+plot(climate.pass.trend, xlab = "Day", ylab = "Trend", main = "Trend")
+
+#Plotting Seasonality
+plot(climate.season, xlab = "Day", ylab = "Seasonality", main = "Seasonality")
+
+#Plotting White Noise
+plot(climate.rand, xlab = "Day", ylab = "Random", main = "Random")
+
+#Plotting Resduals
+plot(climate.res, xlab = "Day", ylab = "Residuals", main = "Residuals")
+```
+
+### Fitting ARMA Models
+
+```{r}
+#Checking ACF and PACF Plots
+par(mfrow = c(1,2))
+
+acf(climate.rand, main = "ACF of the Residual Series", lag.max = 50)
+pacf(climate.rand, main = "PACF of the Residual Series", lag.max = 50)
+```
+
+Trying Different ARIMA models and SARIMA models and looking at lowest AIC Values
+
+AR(1)
+
+ARMA(1,1)
+
+ARMA(2,1)
+
+ARIMA (1,1,0) X (0,1,0)
+
+```{r}
+#AR 1 Model
+fit.ar1 <- arima(climate.rand, order = c(p = 1, d= 0, q = 0), method = "ML", include.mean = F)
+
+#ARMA(1,1) Model
+fit.arma11 <- arima(climate.rand, order = c(p= 1, d = 0, q = 1), method = "ML", include.mean = F)
+
+#ARMA(2,1)
+
+fit.arma21 <- arima(climate.rand, order = c(p= 2, d = 0, q = 1), method = "ML", include.mean = F)
+
+#ARIMA(1,1,0)x(0,1,0)
+fit.s.ar1 <- arima(climate.rand, order = c(1, 1, 0),seasonal = list(order = c(0, 1, 0), period = 12))
+
+fit.ar1 #AIC Value 4990.84
+fit.arma11 #AIC Value 4992.3
+fit.arma21 #AIC Value 4990.47
+fit.s.ar1 #AIC Value 6113.25
+```
+
+Fitting a more complicated AR(2), AR(3), & ARMA(2,2)
+
+```{r}
+#AR 2 Model
+fit.ar2 <- arima(climate.rand, order = c(p = 2, d= 0, q = 0), method = "ML", include.mean = F)
+
+#AR 3 Model
+fit.ar3 <- arima(climate.rand, order = c(p = 3, d= 0, q = 0), method = "ML", include.mean = F)
+
+fit.ar2 #AIC Value of 4992.27
+fit.ar3 #AIC Value of 4993.74
+
+#ARMA(2,2)
+
+fit.arma22 <- arima(climate.rand, order = c(p= 2, d = 0, q = 2), method = "ML", include.mean = F)
+fit.arma22 #AIC Value of 4991.64
+```
+
+Model of Preference: ARMA(2,1) Code Above
+
+### Model Diagnosis
+
+```{r}
+tsdiag(fit.arma21)
+```
+
+Checking for Normality
+
+```{r}
+res <- fit.arma21$residuals
+qqnorm(res)
+qqline(res)
+```
+
+Checking ACF and PACF Plots to see if Residuals appear to be white noise
+
+```{r}
+par(mfrow = c(1,2))
+acf(res, main = "ACF for Residuals")
+pacf(res, main = "PACF for Residuals")
+```
+
+### Forecasting
+
+```{r}
+#Predicting Random Section
+ran.pred <- predict(fit.arma21, n.ahead = 365)
+
+#Predicting Trend
+pred.time <- seq(1463, by = 1, length = 365)
+
+trend.pred <- predict(climate.fit.trend, newdata = data.frame(climate.time = pred.time))
+
+#Predicting Seasonality
+season.pred <- fit.season$fitted[1:365]
+
+#Sum of Predictions 
+pred <- ts(ran.pred$pred + trend.pred + season.pred, start = c(1463, 1), deltat = 1)
+```
+
+### Prediction Plot
+
+```{r}
+plot(climate_data, xlab = "Day", ylab = "Mean Temperature", main = "Mean Temperature in Delhi from 01/2013 - 04/2017", xlim = c(0, 1800), ylim =c(10, 40))
+lines(pred, col = 2)
+
+
 ```
