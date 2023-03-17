@@ -1,8 +1,10 @@
 ---
 title: "Final Project"
 author: "Caitlon, Connor, Abraham"
-date: "2023-03-16"
-output: pdf_document
+date: '2023-03-16'
+output:
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -43,6 +45,7 @@ climate.res <- ts(climate.res, deltat = 1/365)
 climate.day <- factor(cycle(climate.res))
 fit.season <- lm(climate.res ~ climate.day)
 climate.season <- ts(fit.season$fitted, deltat = 1/365)
+plot(climate.season)
 
 climate.rand <- ts(climate.res - climate.season, deltat = 1/365)
 ```
@@ -69,7 +72,7 @@ plot(climate.res, xlab = "Day", ylab = "Residuals", main = "Residuals")
 
 ### Fitting ARMA Models
 
-```{r}
+```{r fig.height=5}
 #Checking ACF and PACF Plots
 par(mfrow = c(1,2))
 
@@ -170,8 +173,7 @@ pred <- ts(ran.pred$pred + trend.pred + season.pred, start = c(1463, 1), deltat 
 ### Prediction Plot
 
 ```{r}
-plot(climate_data, xlab = "Day", ylab = "Mean Temperature", main = "Mean Temperature in Delhi from 01/2013 - 04/2017", xlim = c(0, 1800), ylim =c(10, 40))
+plot(climate_data, xlab = "Day", ylab = "Mean Temperature", main = "Mean Temperature in Delhi from 01/2013 - 04/2018", xlim = c(0, 1800), ylim =c(10, 40))
 lines(pred, col = 2)
-
 
 ```
